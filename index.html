@@ -95,7 +95,7 @@
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
           if (grid[y][x] === 1) {
-            const age = Math.min(ageGrid[y][x]+5, 255);
+            const age = Math.min(ageGrid[y][x]+2, 255);
             let intensity = age; 
 
             ctx.fillStyle = `rgb(${intensity}, ${intensity}, ${intensity})`;
