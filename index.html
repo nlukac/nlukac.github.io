@@ -1,10 +1,180 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<title>Niko Lukac</title>
-	<meta http-equiv="refresh" content="0; url=https://scholar.google.si/citations?user=ohjK5oIAAAAJ&hl=en&oi=ao">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Niko Lukač</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" sizes="16x16" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAHUlEQVR4nGNkYGD4z0ABYKJE86gBowaMGjCYDAAATUABH+w/WFYAAAAASUVORK5CYII=">
+ <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden; 
+      font-family: "Roboto", sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1; 
+      display: block;
+    }
+
+    .content {
+      position: fixed; 
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+      padding: 1rem 2rem;
+      border-radius: 0.5rem;
+      z-index: 1;
+      text-align: center;
+    }
+    .e-mail:before {
+	    content: attr(data-user) "\0040" attr(data-website);
+	    unicode-bidi: bidi-override;
+    }
+    a { text-decoration: none; color: #333; }
+  </style>
 </head>
 <body>
-	<a href="https://scholar.google.si/citations?user=ohjK5oIAAAAJ&hl=en&oi=ao">Google scholar</a>
+  <canvas id="golCanvas"></canvas>
+
+  <div class="content">
+    <h1>Niko Lukač &lt;<span class="e-mail" data-user="niko.lukac" data-website="um.si"></span>&gt;</h1>
+    <p>[<a target="_blank" href="https://scholar.google.si/citations?user=ohjK5oIAAAAJ&hl=en&oi=ao">Scholar</a>] [<a target="_blank" href="https://www.researchgate.net/profile/Niko-Lukac">ResearchGate</a>] [<a target="_blank" href="https://www.linkedin.com/in/nikolukac/">Linkedin</a>] [<a target="_blank" href="https://orcid.org/0000-0002-9517-1157">ORCID</a>]</p>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('golCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let cellSize = 20;
+    let cols, rows;
+    let grid; // "grid" tracks whether the cell is alive (1) or dead (0)
+    let ageGrid;  // "ageGrid" tracks how long each cell has been alive
+
+    let updateInterval = 500; 
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      cols = Math.floor(canvas.width / cellSize);
+      rows = Math.floor(canvas.height / cellSize);
+      //console.log(`Canvas: ${canvas.width}x${canvas.height}, Grid: ${cols}x${rows}`);
+    }
+
+    function initGrids() {
+      grid = new Array(rows);
+      ageGrid = new Array(rows);
+      for (let y = 0; y < rows; y++) {
+        grid[y] = new Array(cols);
+        ageGrid[y] = new Array(cols);
+        for (let x = 0; x < cols; x++) {
+          const alive = Math.random() < 0.5 ? 1 : 0;
+          grid[y][x] = alive;
+          ageGrid[y][x] = alive ? 1 : 0;
+        }
+      }
+    }
+
+    function drawGrid() {
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          if (grid[y][x] === 1) {
+            const age = Math.min(ageGrid[y][x], 255);
+            let intensity = age; 
+
+            ctx.fillStyle = `rgb(${intensity}, ${intensity}, ${intensity})`;
+            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+          }
+        }
+      }
+    }
+
+    function getNeighborCount(x, y) {
+      let count = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue; 
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+            count += grid[ny][nx];
+          }
+        }
+      }
+      return count;
+    }
+
+    function updateGrid() {
+      const newGrid = new Array(rows);
+      const newAgeGrid = new Array(rows);
+
+      for (let y = 0; y < rows; y++) {
+        newGrid[y] = new Array(cols);
+        newAgeGrid[y] = new Array(cols);
+
+        for (let x = 0; x < cols; x++) {
+          const neighbors = getNeighborCount(x, y);
+          const wasAlive = grid[y][x] === 1;
+
+          // Conway's Game of Life rules
+          // - Any live cell with 2 or 3 neighbors survives
+          // - Any dead cell with 3 neighbors becomes alive
+          // - Otherwise, the cell dies or remains dead
+          let nextState = 0;
+          if (wasAlive && (neighbors === 2 || neighbors === 3)) {
+            nextState = 1;
+          } else if (!wasAlive && neighbors === 3) {
+            nextState = 1;
+          }
+
+          newGrid[y][x] = nextState;
+
+          // Update age
+          if (nextState === 1) {
+            if (wasAlive) {
+              newAgeGrid[y][x] = ageGrid[y][x] + 1;
+            } else {
+              newAgeGrid[y][x] = 1;
+            }
+          } else {
+            newAgeGrid[y][x] = 0;
+          }
+        }
+      }
+
+      grid = newGrid;
+      ageGrid = newAgeGrid;
+    }
+
+    function step() {
+      drawGrid();
+      updateGrid();
+      setTimeout(step, updateInterval);
+    }
+
+    function startGame() {
+      resizeCanvas();
+      initGrids();
+      step(); 
+    }
+
+    startGame();
+  </script>
 </body>
 </html>
