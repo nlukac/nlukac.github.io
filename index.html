@@ -33,8 +33,8 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(255, 255, 255, 0.9);
-      color: #333;
+      background: rgba(222, 255, 255, 0.9);
+      color: #000;
       padding: 1rem 2rem;
       border-radius: 0.5rem;
       z-index: 1;
@@ -98,7 +98,7 @@
             const age = Math.min(ageGrid[y][x]+2, 255);
             let intensity = age; 
 
-            ctx.fillStyle = `rgb(${intensity}, ${intensity}, ${intensity})`;
+            ctx.fillStyle = `rgb(0, ${intensity}, ${intensity})`;
             ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
           }
         }
