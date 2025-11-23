@@ -143,6 +143,7 @@
             nextState = 1;
           }
 
+          if (Math.random() < 0.00042) { nextState = nextState === 1 ? 0 : 1; }
           newGrid[y][x] = nextState;
 
           // Update age
